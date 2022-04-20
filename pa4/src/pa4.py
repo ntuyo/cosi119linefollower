@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy, cv2, cv_bridge, numpy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from geometry_msgs.msg import Twist
 
 # Subscribe to the compressed image topic
@@ -20,7 +20,8 @@ class Follower:
     def image_callback(self, msg):
 
         # get image from camera
-        image = self.bridge.imgmsg_to_cv2(msg)
+        np_arr = numpy.fromstring(msg.data, numpy.uint8)
+        image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
         # filter out everything that's not yellow
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -33,8 +34,8 @@ class Follower:
         h, w, d = image.shape
         search_top = 3 * h /4
         search_bot = search_top + 20
-        mask[0:search_top, 0:w] = 0
-        mask[search_bot:h, 0:w] = 0
+        mask[0:int(search_top), 0:w] = 0
+        mask[int(search_bot):h, 0:w] = 0
         cv2.imshow("band", mask)
 
     # Compute the "centroid" and display a red circle to denote it
